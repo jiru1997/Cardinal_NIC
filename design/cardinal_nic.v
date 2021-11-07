@@ -8,7 +8,7 @@ module cardinal_nic(
   input             net_ro, 
   input             net_polarity, 
   input             net_si, 
-  input [63:0]      net_dl, 
+  input [63:0]      net_di, 
   output reg        net_ri, 
   output reg        net_so, 
   output reg [63:0] net_do,
@@ -29,14 +29,17 @@ reg[63:0] output_buffer;
 always @(posedge clk) begin
   if(reset) begin
     net_do <= 64'b0;
+    net_so <= 1'b0;
   end 
   else begin
     if(output_statue_reg == 1'b1 && net_ro == 1'b1 && net_polarity == output_buffer[63]) begin
        net_do <= output_buffer;
+       net_so            <= 1'b1;
        //$display("NIC -> %h -> router", net_do);
     end 
     else begin
        net_do <= net_do;
+       net_so            <= 1'b0;
        //$display("NIC -> x -> router");
     end
   end
@@ -63,22 +66,22 @@ end
 always @(posedge clk) begin
   if(reset) begin
     output_statue_reg <= 1'b0;
-    net_so <= 1'b0;
+    //net_so <= 1'b0;
   end 
   else begin
     if(output_statue_reg == 1'b1 && net_ro == 1'b1 && net_polarity == output_buffer[63]) begin
       output_statue_reg <= 1'b0;
-      net_so            <= 1'b0;
+      //net_so            <= 1'b0;
       //$display("NIC -> %d -> router", output_statue_reg);
     end 
     else if(nicEn && nicWrEn && addr == OUTPUT_CHANNEL_BUFFER) begin
       output_statue_reg <= 1'b1;
-      net_so            <= 1'b1;
+      //net_so            <= 1'b1;
       //$display("processor -> %d -> NIC", output_statue_reg);
     end 
     else begin
       output_statue_reg <= output_statue_reg;
-      net_so            <= net_so;
+      //net_so            <= net_so;
       //$display("no data commnuication between PROCESSOR -> ROUTER");
     end
   end
@@ -91,7 +94,7 @@ always @(posedge clk) begin
   end 
   else begin
     if(net_ri == 1'b1 && net_si == 1'b1) begin
-      input_buffer <= net_dl;
+      input_buffer <= net_di;
       //$display("router -> %h -> NIC", input_buffer);
     end 
     else begin
